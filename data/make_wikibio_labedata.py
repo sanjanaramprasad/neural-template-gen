@@ -80,7 +80,7 @@ def stupid_search(tokes, fields):
         if tokes[i-1] in punctuation or tokes[i-1] in prepositions or tokes[i-1] in splitters:
             i -= 1
             continue
-        for j in xrange(i):
+        for j in range(i):
             if tokes[j] in punctuation or tokes[j] in prepositions or tokes[j] in splitters:
                 continue
             # then check if it matches stuff in the table
@@ -137,7 +137,7 @@ def print_data(direc):
                 tgtlines.append(tgtline)
 
     assert len(srclines) == len(tgtlines)
-    for i in xrange(len(srclines)):
+    for i in range(len(srclines)):
         fields = get_wikibio_fields(srclines[i].strip().split())
         tgttokes = tgtlines[i].strip().split()
         labels = stupid_search(tgttokes, fields)

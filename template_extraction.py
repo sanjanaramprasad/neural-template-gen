@@ -76,7 +76,7 @@ def extract_from_tagged_data(datadir, bsz, thresh, tagged_fi, ntemplates):
     corpus = labeled_data.SentenceCorpus(datadir, bsz, thresh=thresh, add_bos=False,
                                          add_eos=False, test=False)
     nskips = 0
-    for i in xrange(len(corpus.train)):
+    for i in range(len(corpus.train)):
         if corpus.train[i][0].size(0) <= 4:
             nskips += corpus.train[i][0].size(1)
     print "assuming we start on line", nskips, "of train"

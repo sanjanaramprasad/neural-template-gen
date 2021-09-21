@@ -59,9 +59,9 @@ def make_fwd_constr_idxs(L, T, constrs):
     for use w/ fwd alg.
     constrs are 0-indexed
     """
-    cidxs = [set() for t in xrange(T)]
+    cidxs = [set() for t in range(T)]
     bsz = len(constrs)
-    for b in xrange(bsz):
+    for b in range(bsz):
         for tup in constrs[b]:
             if len(tup) == 2:
                 start, end = tup
@@ -71,15 +71,15 @@ def make_fwd_constr_idxs(L, T, constrs):
             # for last thing in segment only allow segment length
             end_steps_back = min(L, end)
             cidxs[end-1].update([(end_steps_back-l-1)*bsz + b
-                                 for l in xrange(end_steps_back) if l+1 != clen])
+                                 for l in range(end_steps_back) if l+1 != clen])
             # now disallow everything for everything else in the segment
-            for i in xrange(start, end-1):
+            for i in range(start, end-1):
                 steps_back = min(L, i+1)
-                cidxs[i].update([(steps_back-l-1)*bsz + b for l in xrange(steps_back)])
+                cidxs[i].update([(steps_back-l-1)*bsz + b for l in range(steps_back)])
             # now disallow things w/in L of the end
-            for i in xrange(end, min(T, end+L-1)):
+            for i in range(end, min(T, end+L-1)):
                 steps_back = min(L, i+1)
-                cidxs[i].update([(steps_back-l+end-1)*bsz + b for l in xrange(i+1, end+steps_back)])
+                cidxs[i].update([(steps_back-l+end-1)*bsz + b for l in range(i+1, end+steps_back)])
     oi_cidxs = [None] # make 1-indexed
     oi_cidxs.extend([torch.LongTensor(list(idxs)) if len(idxs) > 0 else None for idxs in cidxs])
     return oi_cidxs
@@ -90,9 +90,9 @@ def make_bwd_constr_idxs(L, T, constrs):
     for use w/ bwd alg.
     constrs are a bsz-length list of lists of (start, end, label) 0-indexed tups
     """
-    cidxs = [set() for t in xrange(T)]
+    cidxs = [set() for t in range(T)]
     bsz = len(constrs)
-    for b in xrange(bsz):
+    for b in range(bsz):
         for tup in constrs[b]:
             if len(tup) == 2:
                 start, end = tup
@@ -101,17 +101,17 @@ def make_bwd_constr_idxs(L, T, constrs):
             clen = end - start
             steps_fwd = min(L, T-start)
             # for first thing only allow segment length
-            cidxs[start].update([l*bsz + b for l in xrange(steps_fwd) if l+1 != clen])
+            cidxs[start].update([l*bsz + b for l in range(steps_fwd) if l+1 != clen])
 
             # now disallow everything for everything else in the segment
-            for i in xrange(start+1, end):
+            for i in range(start+1, end):
                 steps_fwd = min(L, T-i)
-                cidxs[i].update([l*bsz + b for l in xrange(steps_fwd)])
+                cidxs[i].update([l*bsz + b for l in range(steps_fwd)])
 
             # now disallow things w/in L of the start
-            for i in xrange(max(start-L+1, 0), start):
+            for i in range(max(start-L+1, 0), start):
                 steps_fwd = min(L, T-i)
-                cidxs[i].update([l*bsz + b for l in xrange(steps_fwd) if i+l >= start])
+                cidxs[i].update([l*bsz + b for l in range(steps_fwd) if i+l >= start])
 
     oi_cidxs = [None]
     oi_cidxs.extend([torch.LongTensor(list(idxs)) if len(idxs) > 0 else None for idxs in cidxs])
@@ -166,7 +166,7 @@ def beam_search2(net, corpus, ss, start_inp, exh0, exc0, srcfieldenc,
     # over them as at training time. probably better, but could conceivably average like
     # at training time.
     inps = Variable(torch.LongTensor(K, 4), volatile=True)
-    for ell in xrange(net.L):
+    for ell in range(net.L):
         wrd_dist = net.get_next_word_dist(hid, rul_ss, srcfieldenc).cpu() # K x nwords
         # disallow unks
         wrd_dist[:, unk_idx].zero_()
@@ -191,7 +191,7 @@ def beam_search2(net, corpus, ss, start_inp, exh0, exc0, srcfieldenc,
         inps.data[:, 1].fill_(w2i["<ncf1>"])
         inps.data[:, 2].fill_(w2i["<ncf2>"])
         inps.data[:, 3].fill_(w2i["<ncf3>"])
-        for k in xrange(2*K):
+        for k in range(2*K):
             anc, wrd = top2k[k] / cols, top2k[k] % cols
             # check if any of the maxes are eop
             if wrd == net.eop_idx and ell > 0:
@@ -232,7 +232,7 @@ def beam_search2(net, corpus, ss, start_inp, exh0, exc0, srcfieldenc,
     #wrd_dist = net.get_next_word_dist(hid, ss, srcfieldenc).cpu() # K x nwords
     wrd_dist.log_()
     wrd_dist.add_(curr_scores.expand_as(wrd_dist))
-    for k in xrange(K):
+    for k in range(K):
         wlenscore = wrd_dist[k][net.eop_idx]/(net.L+1) + len_lps[ss][net.L-1]
         if wlenscore > best_hyp_score:
             best_hyp_score = wlenscore
@@ -258,5 +258,5 @@ def calc_pur(counters):
                         purs.append(maxval/total)
                         purs2.append(maxval/(total+oval))
     purs, purs2 = torch.Tensor(purs), torch.Tensor(purs2)
-    print purs.mean(), purs.std()
-    print purs2.mean(), purs2.std()
+    print( purs.mean(), purs.std())
+    print( purs2.mean(), purs2.std())
