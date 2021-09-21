@@ -71,7 +71,7 @@ class HSMM(nn.Module):
                                          opt.layers, dropout=opt.dropout))
             self.state_embs = nn.Parameter(torch.Tensor(opt.K, 1, 1, opt.emb_size))
         else:
-            for _ in xrange(opt.K):
+            for _ in range(opt.K):
                 self.seg_rnns.append(nn.LSTM(rnninsz, opt.hid_size,
                                              opt.layers, dropout=opt.dropout))
         self.ar_rnn = nn.LSTM(opt.emb_size, opt.hid_size, opt.layers, dropout=opt.dropout)
@@ -204,7 +204,7 @@ class HSMM(nn.Module):
         else:
             len_scores = self.len_decoder(state_embs) # K x L
         lplist = [Variable(len_scores.data.new(1, K).zero_())]
-        for l in xrange(2, self.L+1):
+        for l in range(2, self.L+1):
             lplist.append(self.lsm(len_scores.narrow(1, 0, l)).t())
         return lplist, len_scores
 
@@ -221,7 +221,7 @@ class HSMM(nn.Module):
         bsz, seqlen, emb_size = xemb.size()
         newx = [self.start_emb.expand(bsz, seqlen, emb_size)]
         newx.append(xemb)
-        for i in xrange(1, self.L):
+        for i in range(1, self.L):
             pad = self.pad_emb.expand(bsz, i, emb_size)
             rowi = torch.cat([xemb[:, i:], pad], 1)
             newx.append(rowi)
@@ -241,7 +241,7 @@ class HSMM(nn.Module):
         bsz, seqlenp1, rnn_size = states.size()
         newh = [states[:, :seqlenp1-1, :]] # [bsz x seqlen x rnn_size]
         newh.append(states[:, 1:, :])
-        for i in xrange(1, self.L):
+        for i in range(1, self.L):
             pad = self.pad_emb[:, :, :rnn_size].expand(bsz, i, rnn_size)
             rowi = torch.cat([states[:, i+1:, :], pad], 1)
             newh.append(rowi)
@@ -307,7 +307,7 @@ class HSMM(nn.Module):
         # easiest to just loop over K
         state_emb_sz = self.state_embs.size(3)
         seg_lls = []
-        for k in xrange(self.K):
+        for k in range(self.K):
             if self.one_rnn:
                 condembs = torch.cat(
                     [segembs, self.state_embs[k].expand(Lp1, bszsl, state_emb_sz)], 2)
@@ -503,7 +503,7 @@ class HSMM(nn.Module):
         # over them as at training time. probably better, but could conceivably average like
         # at training time.
         inps = Variable(torch.LongTensor(K, 4), volatile=True)
-        for ell in xrange(self.L):
+        for ell in range(self.L):
             wrd_dist = self.get_next_word_dist(hid, rul_ss, srcfieldenc).cpu() # K x nwords
             # disallow unks
             wrd_dist[:, unk_idx].zero_()
@@ -527,7 +527,7 @@ class HSMM(nn.Module):
             inps.data[:, 1].fill_(w2i["<ncf1>"])
             inps.data[:, 2].fill_(w2i["<ncf2>"])
             inps.data[:, 3].fill_(w2i["<ncf3>"])
-            for k in xrange(2*K):
+            for k in range(2*K):
                 anc, wrd = top2k[k] / cols, top2k[k] % cols
                 # check if any of the maxes are eop
                 if wrd == self.eop_idx and ell > 0:
@@ -567,7 +567,7 @@ class HSMM(nn.Module):
         wrd_dist = self.get_next_word_dist(hid, rul_ss, srcfieldenc).cpu() # K x nwords
         wrd_dist.log_()
         wrd_dist.add_(curr_scores.expand_as(wrd_dist))
-        for k in xrange(K):
+        for k in range(K):
             wlenscore = wrd_dist[k][self.eop_idx]/(self.L+1) + len_lps[ss][self.L-1]
             if wlenscore > best_hyp_score:
                 best_hyp_score = wlenscore
@@ -599,7 +599,7 @@ class HSMM(nn.Module):
                                                      srcfieldenc, len_lps, row2tblent, row2feats,
                                                      args.beamsz, final_state=(stidx == len(templt)-1))
             phrs = []
-            for ii in xrange(len(phrs_idxs)):
+            for ii in range(len(phrs_idxs)):
                 if phrs_idxs[ii] < nout_wrds:
                     phrs.append(i2w[phrs_idxs[ii]])
                 else:
@@ -657,7 +657,7 @@ class HSMM(nn.Module):
             hc = hc.expand_as(thc)
             cc = cc.expand_as(tcc)
 
-            for ell in xrange(self.L+1):
+            for ell in range(self.L+1):
                 new_hyps, anc_hs, anc_cs, anc_ths, anc_tcs = [], [], [], [], []
                 inps.data[:, 1].fill_(w2i["<ncf1>"])
                 inps.data[:, 2].fill_(w2i["<ncf2>"])
@@ -678,7 +678,7 @@ class HSMM(nn.Module):
                 cols = wrd_dist.size(1)
                 # used to check for eos here, but maybe we shouldn't
 
-                for k in xrange(2*K):
+                for k in range(2*K):
                     anc, wrd = top2k[k] / cols, top2k[k] % cols
                     # check if any of the maxes are eop
                     if wrd == self.eop_idx and ell > 0 and (not final_state or curr_hyps[anc][0] == eos_idx):
@@ -734,14 +734,14 @@ class HSMM(nn.Module):
                                                              torch.cat(anc_tcs, 1)))
 
             # retrieve topk for this segment (in reverse order)
-            seghyps = [heapq.heappop(minq) for _ in xrange(len(minq))]
+            seghyps = [heapq.heappop(minq) for _ in range(len(minq))]
             if len(seghyps) == 0:
                 return -float("inf"), None
 
             if len(seghyps) < K and not final_state:
                 # haaaaaaaaaaaaaaack
                 ugh = []
-                for ick in xrange(K-len(seghyps)):
+                for ick in range(K-len(seghyps)):
                     scoreick, lenick, hypick, thcick, tccick = seghyps[0]
                     ugh.append((scoreick - 9999999.0 + ick, lenick, hypick, thcick, tccick))
                     # break ties for the comparison
@@ -758,7 +758,7 @@ class HSMM(nn.Module):
                     return -float("inf"), None
             else:
                 thidlst, thclst, tcclst = [], [], []
-                for i in xrange(K):
+                for i in range(K):
                     scorei, leni, hypi, thci, tcci = seghyps[K-i-1]
                     curr_scores[i][0], curr_lens[i][0], curr_hyps[i] = scorei, leni, hypi
                     thidlst.append(thci[-1:, :, :]) # each is 1 x 1 x rnn_size
@@ -827,7 +827,7 @@ def make_combo_targs(locs, x, L, nfields, ngen_types):
     addloc[addloc == ngen_types] = ngen_types+1+nfields # last index
     # finally put in same format as x_segs
     newlocs = torch.LongTensor(L, seqlen, bsz, max_locs).fill_(ngen_types+1+nfields)
-    for i in xrange(L):
+    for i in range(L):
         newlocs[i][:seqlen-i].copy_(addloc[i:])
     return newlocs.transpose(1, 2).contiguous().view(L, bsz*seqlen, max_locs)
 
@@ -838,7 +838,7 @@ def get_uniq_fields(src, pad_idx, keycol=0):
     """
     bsz = src.size(0)
     # get unique keys for each example
-    keys = [torch.LongTensor(list(set(src[b, :, keycol]))) for b in xrange(bsz)]
+    keys = [torch.LongTensor(list(set(src[b, :, keycol]))) for b in range(bsz)]
     maxkeys = max(keyset.size(0) for keyset in keys)
     fields = torch.LongTensor(bsz, maxkeys).fill_(pad_idx)
     for b, keyset in enumerate(keys):
@@ -932,12 +932,12 @@ parser.add_argument('-wid_workers', type=str, default='', help='')
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    print args
+    print (args)
 
     torch.manual_seed(args.seed)
     if torch.cuda.is_available():
         if not args.cuda:
-            print "WARNING: You have a CUDA device, so you should probably run with -cuda"
+            print ("WARNING: You have a CUDA device, so you should probably run with -cuda")
         else:
             torch.cuda.manual_seed(args.seed)
 
@@ -948,7 +948,7 @@ if __name__ == "__main__":
     if not args.interactive and not args.label_train and len(args.gen_from_fi) == 0:
         # make constraint things from labels
         train_cidxs, train_fwd_cidxs = [], []
-        for i in xrange(len(corpus.train)):
+        for i in range(len(corpus.train)):
             x, constrs, _, _, _ = corpus.train[i]
             train_cidxs.append(make_bwd_constr_idxs(args.L, x.size(0), constrs))
             train_fwd_cidxs.append(make_fwd_constr_idxs(args.L, x.size(0), constrs))
@@ -996,7 +996,7 @@ if __name__ == "__main__":
         nsents = 0
         trainperm = torch.randperm(len(corpus.train))
         nmini_batches = min(len(corpus.train), args.max_mbs_per_epoch)
-        for batch_idx in xrange(nmini_batches):
+        for batch_idx in range(nmini_batches):
             net.zero_grad()
             x, _, src, locs, inps = corpus.train[trainperm[batch_idx]]
             cidxs = train_cidxs[trainperm[batch_idx]] if epoch <= args.constr_tr_epochs else None
@@ -1045,10 +1045,10 @@ if __name__ == "__main__":
             nsents += bsz
 
             if (batch_idx+1) % args.log_interval == 0:
-                print "batch %d/%d | train neglogev %g " % (batch_idx+1,
+                print( "batch %d/%d | train neglogev %g " % (batch_idx+1,
                                                             nmini_batches,
-                                                            neglogev/nsents)
-        print "epoch %d | train neglogev %g " % (epoch, neglogev/nsents)
+                                                            neglogev/nsents))
+        print ("epoch %d | train neglogev %g " % (epoch, neglogev/nsents))
         return neglogev/nsents
 
     def test(epoch):
@@ -1056,7 +1056,7 @@ if __name__ == "__main__":
         neglogev = 0.0
         nsents = 0
 
-        for i in xrange(len(corpus.valid)):
+        for i in range(len(corpus.valid)):
             x, _, src, locs, inps = corpus.valid[i]
             cidxs = None
 
@@ -1096,13 +1096,13 @@ if __name__ == "__main__":
             log_marg = logsumexp1(beta_star[0] + init_logps).sum() # bsz x 1 -> 1
             neglogev -= log_marg.data[0]
             nsents += bsz
-        print "epoch %d | valid ev %g" % (epoch, neglogev/nsents)
+        print ("epoch %d | valid ev %g" % (epoch, neglogev/nsents))
         return neglogev/nsents
 
     def label_train():
         net.ar = saved_args.ar_after_decay and not args.no_ar_for_vit
-        print "btw, net.ar:", net.ar
-        for i in xrange(len(corpus.train)):
+        print ("btw, net.ar:", net.ar)
+        for i in range(len(corpus.train)):
             x, _, src, locs, inps = corpus.train[i]
             fwd_cidxs = None
 
@@ -1136,11 +1136,11 @@ if __name__ == "__main__":
             bwd_obs_logprobs = infc.bwd_from_fwd_obs_logprobs(fwd_obs_logps.data)
             seqs = infc.viterbi(init_logps.data, trans_logps.data, bwd_obs_logprobs,
                                 [t.data for t in len_logprobs], constraints=fwd_cidxs)
-            for b in xrange(bsz):
+            for b in range(bsz):
                 words = [corpus.dictionary.idx2word[w] for w in x[:, b]]
                 for (start, end, label) in seqs[b]:
-                    print "%s|%d" % (" ".join(words[start:end]), label),
-                print
+                    print ("%s|%d" % (" ".join(words[start:end]), label),)
+                 
 
     def gen_from_srctbl(src_tbl, top_temps, coeffs, src_line=None):
         net.ar = saved_args.ar_after_decay
@@ -1169,7 +1169,7 @@ if __name__ == "__main__":
 
         nfields = src_b.size(1)
         row2tblent = {}
-        for ff in xrange(nfields):
+        for ff in range(nfields):
             field, idx = i2w[src_b[0][ff][0]], i2w[src_b[0][ff][1]]
             if (field, idx) in src_tbl:
                 row2tblent[ff] = (field, idx, src_tbl[field, idx])
@@ -1196,7 +1196,7 @@ if __name__ == "__main__":
             # get templt transition prob
             tscores = [init_logps[0][templt[0]]]
             [tscores.append(trans_logps[0][templt[tt-1]][templt[tt]])
-             for tt in xrange(1, len(templt))]
+             for tt in range(1, len(templt))]
 
             if net.ar:
                 phrases, wscore, tokes = net.gen_one_ar(templt, h0[0], c0[0], srcfieldenc,
@@ -1238,15 +1238,14 @@ if __name__ == "__main__":
             str_phrases = [" ".join([str(n) if type(n) is int else n for n in phrs]) for phrs in best_phrases]
         tmpltd = ["%s|%d" % (phrs, best_templt[kk]) for kk, phrs in enumerate(str_phrases)]
         if args.verbose:
-            print src_line
+            print (src_line)
             #print src_tbl
 
-        print "%s|||%s" % (" ".join(str_phrases), " ".join(tmpltd))
+        print ("%s|||%s" % (" ".join(str_phrases), " ".join(tmpltd)))
         if args.verbose:
             statstr = "a=%.2f t=%.2f g=%.2f" % (best_score, best_tscore, best_gscore)
-            print statstr
-            print
-        #assert False
+            print(statstr)
+                   
 
     def gen_from_src():
         from template_extraction import extract_from_tagged_data, align_cntr
@@ -1261,13 +1260,13 @@ if __name__ == "__main__":
             chunksz = math.floor(len(src_lines)/float(nworkers))
             startln = int(wid*chunksz)
             endln = int((wid+1)*chunksz) if wid < nworkers-1 else len(src_lines)
-            print >> sys.stderr, "worker", wid, "doing lines", startln, "thru", endln-1
+            print (  sys.stderr, "worker", wid, "doing lines", startln, "thru", endln-1)
             src_lines = src_lines[startln:endln]
 
         net.eval()
         coeffs = [float(flt.strip()) for flt in args.gen_wts.split(',')]
         if args.gen_on_valid:
-            for i in xrange(len(corpus.valid)):
+            for i in range(len(corpus.valid)):
                 if i > 2:
                     break
                 x, _, src, locs, inps = corpus.valid[i]
@@ -1279,7 +1278,7 @@ if __name__ == "__main__":
                     #src = src.cuda()
                     #amask = amask.cuda()
 
-                for b in xrange(bsz):
+                for b in range(bsz):
                     src_line = src_lines[corpus.val_mb2linenos[i][b]]
                     if "wiki" in args.data:
                         src_tbl = get_wikibio_poswrds(src_line.strip().split())
@@ -1301,7 +1300,7 @@ if __name__ == "__main__":
         from template_extraction import extract_from_tagged_data
         i2w = corpus.dictionary.idx2word
         net.eval()
-        cop_counters = [Counter() for _ in xrange(net.K*net.Kmul)]
+        cop_counters = [Counter() for _ in range(net.K*net.Kmul)]
         net.ar = saved_args.ar_after_decay and not args.no_ar_for_vit
         top_temps, _, _ = extract_from_tagged_data(args.data, args.bsz, args.thresh,
                                                    args.tagged_fi, args.ntemplates)
@@ -1315,7 +1314,7 @@ if __name__ == "__main__":
 
         assert len(srclines) == len(tgtlines)
 
-        for i in xrange(len(corpus.train)):
+        for i in range(len(corpus.train)):
             x, _, src, locs, inps = corpus.train[i]
             fwd_cidxs = None
 
@@ -1348,7 +1347,7 @@ if __name__ == "__main__":
             seqs = infc.viterbi(init_logps.data, trans_logps.data, bwd_obs_logprobs,
                                 [t.data for t in len_logprobs], constraints=fwd_cidxs)
             # get rid of stuff not in our top_temps
-            for bidx in xrange(bsz):
+            for bidx in range(bsz):
                 if tuple(labe for (start, end, labe) in seqs[bidx]) in top_temps:
                     lineno = corpus.train_mb2linenos[i][bidx]
                     tgttokes = tgtlines[lineno]
@@ -1392,17 +1391,17 @@ if __name__ == "__main__":
             else:
                 decayed = True
                 best_valloss = args.best_loss
-            print "starting with", prev_valloss, best_valloss
+            print ("starting with", prev_valloss, best_valloss)
 
         for epoch in range(1, args.epochs + 1):
             if epoch > args.no_ar_epochs and not net.ar and decayed:
                 net.ar = True
                 # hack
                 if args.word_ar and not net.word_ar:
-                    print "turning on word ar..."
+                    print ("turning on word ar...")
                     net.word_ar = True
 
-            print "ar:", net.ar
+            print ("ar:", net.ar)
 
             train(epoch)
             net.eval()
@@ -1411,7 +1410,7 @@ if __name__ == "__main__":
             if valloss < best_valloss:
                 best_valloss = valloss
                 if len(args.save) > 0:
-                    print "saving to", args.save
+                    print ("saving to", args.save)
                     state = {"opt": args, "state_dict": net.state_dict(),
                              "lr": args.lr, "dict": corpus.dictionary}
                     torch.save(state, args.save + "." + str(int(decayed)))
@@ -1423,20 +1422,20 @@ if __name__ == "__main__":
                     net.ar = True
                     # hack
                     if args.word_ar and not net.word_ar:
-                        print "turning on word ar..."
+                        print ("turning on word ar...")
                         net.word_ar = True
-                print "decaying lr to:", args.lr
+                print ("decaying lr to:", args.lr)
                 if args.lr < 1e-5:
                     break
             prev_valloss = valloss
             if args.cuda:
-                print "ugh...."
+                print ("ugh....")
                 shmocals = locals()
                 for shk in shmocals.keys():
                     shv = shmocals[shk]
                     if hasattr(shv, "is_cuda") and shv.is_cuda:
                         shv = shv.cpu()
-                print "done!"
-                print
+                print( "done!")
             else:
-                print
+                print("")
+       

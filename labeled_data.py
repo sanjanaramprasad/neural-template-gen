@@ -58,9 +58,9 @@ class SentenceCorpus(object):
         trsents, trlabels, trfeats, trlocs, inps = self.tokenize(
             os.path.join(path, 'train.txt'), train_src, add_to_dict=add_to_dict,
             add_bos=add_bos, add_eos=add_eos)
-        print "using vocabulary of size:", len(self.dictionary)
+        print ("using vocabulary of size:", len(self.dictionary))
 
-        print self.ngen_types, "gen word types"
+        print (self.ngen_types, "gen word types")
         self.train, self.train_mb2linenos = self.minibatchify(
             trsents, trlabels, trfeats, trlocs, inps, bsz) # list of minibatches
 
@@ -72,7 +72,7 @@ class SentenceCorpus(object):
                     os.path.join(path, 'valid.txt'), val_src, add_to_dict=False,
                     add_bos=add_bos, add_eos=add_eos)
             else:
-                print "using test data and whatnot...."
+                print ("using test data and whatnot....")
                 test_src = os.path.join(path, "src_test.txt")
                 vsents, vlabels, vfeats, vlocs, vinps = self.tokenize(
                     os.path.join(path, 'test.txt'), test_src, add_to_dict=False,
@@ -84,6 +84,7 @@ class SentenceCorpus(object):
     def get_vocabs(self, path, src_path, thresh=2):
         """unks words occurring <= thresh times"""
         tgt_voc = Counter()
+        print(path)
         assert os.path.exists(path)
 
         linewords = []
@@ -116,12 +117,12 @@ class SentenceCorpus(object):
         # so we need separate unking for generation
         #print "comeon", "aerobatic" in genwords
         for cntr in [tgt_voc, genwords]:
-            for k in cntr.keys():
+            for k in list(cntr.keys()):
                 if cntr[k] <= thresh:
                     del cntr[k]
 
         self.genset = set(genwords.keys())
-        tgtkeys = tgt_voc.keys()
+        tgtkeys = list(tgt_voc.keys())
         # make sure gen stuff is first
         tgtkeys.sort(key=lambda x: -(x in self.genset))
         self.dictionary.bulk_add(tgtkeys)
@@ -153,7 +154,7 @@ class SentenceCorpus(object):
                 feats, wrd2idxs, wrd2fields = [], defaultdict(list), defaultdict(list)
                 # get total number of words per field
                 fld_cntr = Counter([key for key, _ in fields])
-                for (k, idx), wrd in fields.iteritems():
+                for (k, idx), wrd in fields.items():
                     if k in w2i:
                         featrow = [self.dictionary.add_word(k, add_to_dict),
                                    self.dictionary.add_word(idx, add_to_dict),
@@ -248,8 +249,8 @@ class SentenceCorpus(object):
         nfeats = len(curr_feats[0][0])
         for feats in curr_feats:
             if len(feats) < max_rows:
-                [feats.append([self.dictionary.word2idx["<pad>"] for _ in xrange(nfeats)])
-                 for _ in xrange(max_rows - len(feats))]
+                [feats.append([self.dictionary.word2idx["<pad>"] for _ in range(nfeats)])
+                 for _ in range(max_rows - len(feats))]
         return torch.LongTensor(curr_feats)
 
 
@@ -266,7 +267,7 @@ class SentenceCorpus(object):
                 if len(feats) < max_rows:
                     # pick random rows
                     randidxs = [random.randint(0, len(feats)-1)
-                                for _ in xrange(max_rows - len(feats))]
+                                for _ in range(max_rows - len(feats))]
                     [feats.append(feats[ridx]) for ridx in randidxs]
         return torch.LongTensor(curr_inps)
 
@@ -284,7 +285,7 @@ class SentenceCorpus(object):
         curr_batch, curr_labels, curr_feats, curr_locs, curr_linenos = [], [], [], [], []
         curr_inps = []
         curr_len = len(sents[0])
-        for i in xrange(len(sents)):
+        for i in range(len(sents)):
             if len(sents[i]) != curr_len or len(curr_batch) == bsz: # we're done
                 minibatches.append((torch.LongTensor(curr_batch).t().contiguous(),
                                     curr_labels, self.padded_feat_mb(curr_feats),
